@@ -10,7 +10,6 @@
 int main(int argc, char *argv[]) {
 	std::cout << "Bouncing Ball, interactive block\n";
 	sf::RenderWindow window{ sf::VideoMode{ 1080, 720 }, "SFML window" };
-	//ball my_block({ 320.0, 300.0 }, 5.0);
 	block my_block({ 50.0, 100.0 }, { 100.0, 30.0 }, { 255, 0, 0 });
 	ball my_ball({ 320.0, 300.0 }, { 30.0, 30.0 }, { 0, 255, 0 });
 	wall my_wall0({ 0.0, 0.0 }, { 30.0, 720.0 }, { 0, 255, 255 });
