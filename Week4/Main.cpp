@@ -13,9 +13,11 @@ int main()
 	// Open file
 	std::string filename = "pg10.txt";
 	std::ifstream file(filename);
+	std::string s;
 
 	//1
 	//Lees alle characters van deze file in een vector.
+	file >> std::noskipws;
 	std::vector<char> Words{
 		std::istream_iterator<char>{file},
 		std::istream_iterator<char>{}
@@ -58,41 +60,34 @@ int main()
 	//8
 	//Bepaal welke woorden er in de tekst voorkomen en druk de 10 meest voorkomende woorden af.
 	//Een woord is aaneengesloten reeks letters. (gebruik een map)
-	std::map< std::string, int > words;
+	std::map<std::string, int> map;
 	std::ifstream file2("pg10.txt");
 	std::string fileString;
-
 	while (file2) {
 		file2 >> fileString;
-		if (words.count(fileString) > 0) {
-			words[fileString]++;
+		if (map.count(fileString) > 0) {
+			map[fileString] ++;
 		}
 		else {
-			words[fileString] = 1;
+			map[fileString] = 1;
 		}
 	}
-	/*
-	std::string tmp;
-	std::vector<std::string> StringVec = {};
-	std::vector<std::string> StringCountList = {};
-	for (auto i : words) {
-		int StringCount = 1;
-		//std::cout << i.first << " " << i.second << std::endl;
-		StringVec.push_back(i.first);
-		for (auto j : StringVec) {
-			if (StringVec[i] == StringVec[i][j]) {
-				StringCount++;
-				std::cout << StringCount << std::endl;
+
+	std::string word;
+	int current_max;
+	for (unsigned int i = 0; i < 10; i++) {
+		current_max = 0;
+		for (auto i : map) {
+			if (i.second > current_max) {
+				current_max = i.second;
+				word = i.first;
 			}
 		}
+		std::cout << word << "\n";
+		map.erase(word);
 	}
-
-	*/
-
+	
 	sf::sleep(sf::milliseconds(100000));
-
-	
-	
 
 }
  
