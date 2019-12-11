@@ -1,161 +1,85 @@
 #include <iostream>
 #include <functional>
 #include <SFML/Graphics.hpp>
-#include "action.hpp"
 #include "circle.hpp"
-#include "factory.hpp"
 #include "rectangle.hpp"
-#include "picture.hpp"
-#include <array>
+#include "line.hpp"
+#include <vector>
+#include <fstream>
 #include <string>
 #include "error.hpp"
+#include "factory.hpp"
 
-// Shift Operator
-std::ifstream & operator>>(std::ifstream & input, sf::Vector2f & rhs) {
-	char c;
-	if (!(input >> c)) {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw end_of_file();
-	}
 
-	if (c != '(') {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw invalid_position(c);
-	}
-
-	if (!(input >> rhs.x)) {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw end_of_file();
-	}
-
-	if (!(input >> c)) {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw end_of_file();
-	}
-
-	if (!(input >> rhs.y)) {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw end_of_file();
-	}
-
-	if (!(input >> c)) {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw end_of_file();
-	}
-
-	if (c != ')') {
-		std::cout << __FILE__ << ":" << __LINE__ << "\n" << std::flush;
-		throw invalid_position(c);
-	}
-
-	return input;
-}
-
-std::ifstream & operator>>(std::ifstream & input, sf::Color & rhs) {
-	std::string s;
-	input >> s;
-
-	const struct {
-		const char * name; sf::Color color;
-	}
-
-	colors[]{
-			{"red",    sf::Color::Red },
-			{"white", sf::Color::White},
-			{"green", sf::Color::Green},
-			{"blue", sf::Color::Blue},
-			{ "yellow", sf::Color::Yellow },
-			{"magenta", sf::Color::Magenta},
-			{"cyan", sf::Color::Cyan},
-			{"Transparent", sf::Color::Transparent}
-	};
-
-	for (auto const & color : colors) {
-		if (color.name == s) {
-			rhs = color.color;
-			std::cout << color.name;
-			return input;
+void select(std::vector<std::unique_ptr<drawable>> & drawables, sf::RenderWindow & window) {
+	if (sf::Mouse::isButtonPressed(sf::Mouse::Left)) {
+		for (auto & object : drawables) {
+			if (object->Selected) {
+				object->jump(sf::Mouse::getPosition(window));
+				return;
+			}
 		}
-
+		for (auto & object : drawables) {
+			if (object->selected(sf::Mouse::getPosition(window))) {
+				object->Selected = true;
+			}
+		}
 	}
-	if (s == "") {
-		throw end_of_file();
+	else {
+		for (auto & object : drawables) {
+			if (object->Selected) {
+				object->Selected = false;
+				return;
+			}
+		}
 	}
-	throw unknown_color(s);
 }
-
-drawable * screen_object_read(std::ifstream & input) {
-	sf::Vector2f position;
-	sf::Vector2f position2;
-	std::string filename;
-	float size;
-	sf::Color color;
-	std::string name;
-	input >> position >> name;
-
-
-	if (name == "CIRCLE") {
-		input >> color >> size;
-		return new circle(position, size, color);
-	}
-	else if (name == "RECTANGLE") {
-		input >> color >> position2;
-		return new rectangle(position, position2, color);
-	}
-	else if (name == "PICTURE") {
-		input >> filename;
-		return new picture(position, filename);
-	}
-	else if (name == "") {
-		throw end_of_file();
-	}
-	throw unknown_shape(name);
-}
-
 
 int main(int argc, char *argv[]) {
-	//Open File
+	bool error = false;
+	std::vector <std::unique_ptr<drawable>> drawables;
 	std::ifstream input("config.txt");
-	std::vector<drawable * > objects = {};
-	
 	try {
 		for (;;) {
-			objects.push_back(screen_object_read(input));
+			drawables.push_back(screen_object_read(input));
 		}
 	}
 	catch (end_of_file) {
-		//do nothing
+		// do nothing
 	}
-
 	catch (std::exception & problem) {
 		std::cout << problem.what();
+		error = true;
 	}
 
-	std::cout << "Factory\n";
-	//Declarations
-	sf::RenderWindow window{ sf::VideoMode{ 1080, 720 }, "SFML window" };
+	sf::RenderWindow window{ sf::VideoMode{ 640, 480 }, "SFML window" };
 
 	while (window.isOpen()) {
+
+		select(drawables, window);
+
 		window.clear();
-		sf::Texture texture;
-		if (!texture.loadFromFile("download.png", sf::IntRect(10, 10, 32, 32)))
-		{
-			// error...
-		}
-		sf::Sprite sprite;
-		sprite.setTexture(texture);
-		window.draw(sprite);
-		for (auto * object : objects) {
+		for (auto & object : drawables) {
 			object->draw(window);
 		}
 		window.display();
 
-		sf::sleep(sf::milliseconds(2));
+		sf::sleep(sf::milliseconds(20));
+
 		sf::Event event;
 		while (window.pollEvent(event)) {
 			if (event.type == sf::Event::Closed) {
 				window.close();
 			}
+		}
+	}
+	if (!error) {
+		std::ofstream output("objects.txt");
+		for (auto & object : drawables) {
+			object->writePosition(output);
+			object->writeType(output);
+			object->writeObjectSpecificStuff(output);
+			output << "\n";
 		}
 	}
 
