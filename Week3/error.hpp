@@ -42,7 +42,7 @@ public:
 	invalid_position(const char & name) :
 		s{ std::string{ "invalid position [" } +name + "]" }
 	{}
-	const const char * what() const noexcept override {
+	const char * what() const noexcept override {
 		return s.c_str();
 	}
 private:
