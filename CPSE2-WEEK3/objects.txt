@@ -1,0 +1,3 @@
+(172, 206) RECTANGLE red (30, 40)
+(406, 202) PICTURE bird.jpg
+(332, 191) CIRCLE blue 30
